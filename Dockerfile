@@ -1,5 +1,5 @@
-FROM alpine:3.7
-MAINTAINER Christophe Tafani-Dereeper <christophe@tafani-dereeper.me>
+FROM golang:alpine
+MAINTAINER Mark Jozefiak <ImEmJay@gmail.com>
 
 #--
 #-- Build variables
@@ -9,6 +9,9 @@ ARG DUPLICACY_VERSION=2.3.0
 #--
 #-- Environment variables
 #--
+#ENV GOROOT /usr/lib/go
+#ENV GOPATH /go
+#ENV PATH /go/bin:$PATH
 
 ENV BACKUP_SCHEDULE='* * * * *' \
     BACKUP_NAME='' \
@@ -39,8 +42,9 @@ ENV BACKUP_SCHEDULE='* * * * *' \
 #-- Other steps
 #--
 RUN apk --no-cache add ca-certificates && update-ca-certificates
-RUN wget https://github.com/gilbertchen/duplicacy/releases/download/v${DUPLICACY_VERSION}/duplicacy_linux_x64_${DUPLICACY_VERSION} -O /usr/bin/duplicacy && \
-    chmod +x /usr/bin/duplicacy
+RUN apk --no-cache add git make musl-dev go
+RUN go get github.com/gilbertchen/duplicacy/...
+RUN cd $GOPATH/src/github.com/gilbertchen/duplicacy && go build duplicacy/duplicacy_main.go
 
 RUN mkdir /app
 WORKDIR /app

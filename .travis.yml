@@ -1,15 +1,18 @@
 sudo: required
 language: python
 python:
-- '2.7'
+  - '2.7'
 services:
-- docker
+before_install:
+  - curl -fsSL https://get.docker.com | sh
+  - echo '{"experimental":"enabled"}' | sudo tee /etc/docker/daemon.json
+  - mkdir -p $HOME/.docker
+  - echo '{"experimental":"enabled"}' | sudo tee $HOME/.docker/config.json
+  - sudo service docker start
 install:
-- mkdir -p /tmp/bin
-- wget https://github.com/gilbertchen/duplicacy/releases/download/v2.3.0/duplicacy_linux_x64_2.3.0 -O /tmp/bin/duplicacy && chmod +x /tmp/bin/duplicacy
-- export PATH=$PATH:/tmp/bin
-- pip install awscli
+  - docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+  - docker buildx create --name xbuilder --use
 script:
-- docker build . -t duplicacy-autobackup
+  - travis_wait 30 docker buildx build --progress plain -t duplicacy-autobackup --platform linux/386,linux/amd64,linux/arm,linux/arm64 --push -t imemjay/duplicacy-autobackup .
 notifications:
   email: false
